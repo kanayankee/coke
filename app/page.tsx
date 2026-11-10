@@ -13,7 +13,8 @@ function ago(fromMs: number, now: number) {
   return h < 48 ? `${h}時間前` : `${Math.floor(h / 24)}日前`;
 }
 const yen = (n: number) => `¥${n.toLocaleString("ja-JP")}`;
-const liters = (ml: number) => (ml >= 1000 ? `${(ml / 1000).toFixed(1)}L` : `${ml}ml`);
+// 容量は500mlペット換算の「本分」で表示する
+const eq = (ml: number) => `${(ml / 500).toFixed(1)}本分`;
 
 function barColor(count: number, limit: number | null) {
   if (limit == null) return "var(--green)";
@@ -85,14 +86,14 @@ export default function Home() {
           <>
             <div className="when">{st.lastDrink.label}</div>
             <div className="ago">（{ago(st.lastDrink.atMs, now)}）</div>
-            <div className="sz">{st.lastDrink.size === "custom" ? "自由入力" : st.lastDrink.size}・{st.lastDrink.volumeMl}ml</div>
+            <div className="sz">{st.lastDrink.size === "custom" ? `自由入力（${eq(st.lastDrink.volumeMl)}）` : st.lastDrink.size}</div>
           </>
         ) : <div className="when">まだ記録がありません</div>}
       </section>
 
       <div className="row2" style={{ marginBottom: 12 }}>
         <section className="card"><h2>連続ゼロ日数</h2><div className="stat">{st.zeroStreak}<small>日</small></div></section>
-        <section className="card"><h2>今週の合計</h2><div className="stat">{liters(st.totals.weekMl)}</div></section>
+        <section className="card"><h2>今週の合計（500mlペット換算）</h2><div className="stat">{(st.totals.weekMl / 500).toFixed(1)}<small>本分</small></div></section>
       </div>
 
       <section className="card">
@@ -108,7 +109,7 @@ export default function Home() {
       <section className="card">
         <h2>換算（今週 / 今月）</h2>
         <table><tbody>
-          <tr><td>合計</td><td>{liters(st.totals.weekMl)}</td><td>{liters(st.totals.monthMl)}</td></tr>
+          <tr><td>合計(500ml換算)</td><td>{eq(st.totals.weekMl)}</td><td>{eq(st.totals.monthMl)}</td></tr>
           {st.totals.hasPrices && <tr><td>金額</td><td>{yen(st.totals.weekYen)}</td><td>{yen(st.totals.monthYen)}</td></tr>}
           <tr><td>糖分</td><td>{st.totals.weekSugarG}g</td><td>{st.totals.monthSugarG}g</td></tr>
         </tbody></table>
@@ -134,7 +135,7 @@ export default function Home() {
       )}
 
       <div className="links">
-        <StoryButton />
+        {pw && <StoryButton />}
         {pw && <button className="btn line" onClick={() => setMode("late")}>後から記録</button>}
         {pw && undoable && <button className="btn line" onClick={() => setMode("undo")}>直前の記録を取り消す</button>}
         {pw && <button className="btn line" onClick={lock}>ログアウト</button>}
@@ -255,7 +256,7 @@ function RecordDialog({ mode, st, pw, onUnauthorized, onClose, onDone }: { mode:
                 <div className="grp">{g}</div>
                 <div className="sizes">
                   {st.sizes.filter((z) => z.group === g).map((z) => (
-                    <button key={z.label} className={`size ${!custom && label === z.label ? "sel" : ""}`} onClick={() => { setLabel(z.label); setCustom(false); }}>{z.label}<br /><small>{z.volumeMl}ml</small></button>
+                    <button key={z.label} className={`size ${!custom && label === z.label ? "sel" : ""}`} onClick={() => { setLabel(z.label); setCustom(false); }}>{z.label}</button>
                   ))}
                 </div>
               </div>
