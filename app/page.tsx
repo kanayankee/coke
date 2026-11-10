@@ -27,6 +27,11 @@ export default function Home() {
   const [err, setErr] = useState("");
   const [now, setNow] = useState(Date.now());
   const [mode, setMode] = useState<Mode>(null);
+  const [pw, setPw] = useState<string | null>(null); // ログイン済みならパスワード(メモリ上)
+  const [login, setLogin] = useState(false);
+
+  useEffect(() => { try { const v = localStorage.getItem(PW_KEY); if (v) setPw(v); } catch {} }, []);
+  const lock = useCallback(() => { try { localStorage.removeItem(PW_KEY); } catch {} setPw(null); }, []);
 
   const load = useCallback(async () => {
     try {
@@ -130,16 +135,22 @@ export default function Home() {
 
       <div className="links">
         <StoryButton />
-        <button className="btn line" onClick={() => setMode("late")}>後から記録</button>
-        {undoable && <button className="btn line" onClick={() => setMode("undo")}>直前の記録を取り消す</button>}
+        {pw && <button className="btn line" onClick={() => setMode("late")}>後から記録</button>}
+        {pw && undoable && <button className="btn line" onClick={() => setMode("undo")}>直前の記録を取り消す</button>}
+        {pw && <button className="btn line" onClick={lock}>ログアウト</button>}
       </div>
 
-      <div className="dock"><div className="in">
-        <button className="btn red" onClick={() => setMode("drink")}>飲んだ</button>
-        <button className="btn green" onClick={() => setMode("skip")}>我慢した</button>
-      </div></div>
+      {pw ? (
+        <div className="dock"><div className="in">
+          <button className="btn red" onClick={() => setMode("drink")}>飲んだ</button>
+          <button className="btn green" onClick={() => setMode("skip")}>我慢した</button>
+        </div></div>
+      ) : (
+        <button className="fab" aria-label="記録する(ログイン)" onClick={() => setLogin(true)}>✏️</button>
+      )}
 
-      {mode && <RecordDialog mode={mode} st={st} onClose={() => setMode(null)} onDone={(s) => { setSt(s); setMode(null); }} />}
+      {login && <LoginDialog onClose={() => setLogin(false)} onOk={(p) => { setPw(p); setLogin(false); }} />}
+      {mode && pw && <RecordDialog mode={mode} st={st} pw={pw} onUnauthorized={lock} onClose={() => setMode(null)} onDone={(s) => { setSt(s); setMode(null); }} />}
     </div>
   );
 }
@@ -167,30 +178,53 @@ function StoryButton() {
   return <button className="btn line" disabled={busy} onClick={share}>{busy ? "作成中…" : "ストーリー用に共有"}</button>;
 }
 
-function RecordDialog({ mode, st, onClose, onDone }: { mode: Exclude<Mode, null>; st: PublicStatus; onClose: () => void; onDone: (s: PublicStatus) => void }) {
+function LoginDialog({ onClose, onOk }: { onClose: () => void; onOk: (pw: string) => void }) {
+  const [pw, setPw] = useState("");
+  const [remember, setRemember] = useState(true);
+  const [msg, setMsg] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function submit() {
+    if (!pw) return setMsg("パスワードを入力してください");
+    setBusy(true);
+    setMsg("");
+    try {
+      const r = await fetch("/api/verify", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: pw }) });
+      if (!r.ok) throw new Error((await r.json()).error || "失敗しました");
+      if (remember) { try { localStorage.setItem(PW_KEY, pw); } catch {} }
+      onOk(pw);
+    } catch (e) { setMsg((e as Error).message); setBusy(false); }
+  }
+  return (
+    <div className="sheet-bg" onClick={onClose}>
+      <div className="sheet" onClick={(e) => e.stopPropagation()}>
+        <h3>ログイン</h3>
+        <input type="password" value={pw} autoFocus onChange={(e) => setPw(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit()} autoComplete="current-password" placeholder="パスワード" />
+        <label className="chk"><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />この端末で記憶する</label>
+        {msg && <div className="err">{msg}</div>}
+        <button className="btn red full" disabled={busy} onClick={submit}>{busy ? "確認中…" : "ログイン"}</button>
+        <button className="btn line full" style={{ marginTop: 8 }} onClick={onClose}>やめる</button>
+      </div>
+    </div>
+  );
+}
+
+function RecordDialog({ mode, st, pw, onUnauthorized, onClose, onDone }: { mode: Exclude<Mode, null>; st: PublicStatus; pw: string; onUnauthorized: () => void; onClose: () => void; onDone: (s: PublicStatus) => void }) {
   const [label, setLabel] = useState("");
   const [custom, setCustom] = useState(false);
   const [ml, setMl] = useState("");
   const [at, setAt] = useState("");
-  const [pw, setPw] = useState("");
-  const [remember, setRemember] = useState(true);
-  const [saved, setSaved] = useState(false);
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const needSize = mode === "drink" || mode === "late";
 
-  useEffect(() => { try { if (localStorage.getItem(PW_KEY)) setSaved(true); } catch {} }, []);
-
   async function submit() {
     setMsg("");
-    const password = saved ? localStorage.getItem(PW_KEY) ?? "" : pw;
-    if (!password) return setMsg("パスワードを入力してください");
     if (needSize && !custom && !label) return setMsg("サイズを選んでください");
     if (needSize && custom && !(Number(ml) > 0)) return setMsg("mlを入力してください");
     if (mode === "late" && !at) return setMsg("日時を選んでください");
     setBusy(true);
-    const body = mode === "undo" ? { password } : {
-      password,
+    const body = mode === "undo" ? { password: pw } : {
+      password: pw,
       kind: mode === "skip" ? "skip" : "drink",
       ...(needSize ? (custom ? { volumeMl: Number(ml) } : { sizeLabel: label }) : {}),
       ...(mode === "late" ? { at: new Date(at + ":00+09:00").getTime() } : {}),
@@ -199,10 +233,9 @@ function RecordDialog({ mode, st, onClose, onDone }: { mode: Exclude<Mode, null>
       const r = await fetch(mode === "undo" ? "/api/undo" : "/api/log", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
       const j = await r.json();
       if (!r.ok) {
-        if (r.status === 401) { try { localStorage.removeItem(PW_KEY); } catch {} setSaved(false); }
+        if (r.status === 401) onUnauthorized();
         throw new Error(j.error || "失敗しました");
       }
-      if (remember && !saved) { try { localStorage.setItem(PW_KEY, password); } catch {} }
       onDone(j);
     } catch (e) { setMsg((e as Error).message); setBusy(false); }
   }
@@ -232,13 +265,6 @@ function RecordDialog({ mode, st, onClose, onDone }: { mode: Exclude<Mode, null>
               <button className={`size ${custom ? "sel" : ""}`} onClick={() => setCustom(true)}>その他</button>
               {custom && <input type="number" inputMode="numeric" placeholder="ml" value={ml} onChange={(e) => setMl(e.target.value)} style={{ marginTop: 0 }} />}
             </div>
-          </>
-        )}
-        {!saved && (
-          <>
-            <div className="grp">パスワード</div>
-            <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="current-password" />
-            <label className="chk"><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />この端末で記憶する</label>
           </>
         )}
         {msg && <div className="err">{msg}</div>}
