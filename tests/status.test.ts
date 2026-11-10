@@ -69,3 +69,20 @@ describe("今日の目安", () => {
     expect(st.zeroStreak).toBe(3);
   });
 });
+
+describe("木曜開始のプログラム", () => {
+  const S2: Settings = { ...S, programStart: "2026-11-05" };
+  it("週は開始日と同じ木曜区切り(木曜3時59分は前の週)", () => {
+    const logs = [drink("2026-11-06T12:00:00+09:00"), drink("2026-11-12T03:59:00+09:00"), drink("2026-11-12T04:00:00+09:00")];
+    const w = computeWeeks(logs, S2, [], t("2026-11-13T12:00:00+09:00"));
+    expect(w.map((x) => x.weekStart)).toEqual(["2026-11-05", "2026-11-12"]);
+    expect(w[0].actual).toBe(2);
+    expect(w[1].limit).toBe(2); // 計測週2本-1=1 だが最終目標2を下回らない
+  });
+  it("開始週の途中は計測週として表示される", () => {
+    const st = buildStatus([drink("2026-11-06T12:00:00+09:00")], [], S2, [], t("2026-11-10T12:00:00+09:00"));
+    expect(st.state).toBe("measuring");
+    expect(st.weekStart).toBe("2026-11-05");
+    expect(st.daysLeft).toBe(2); // 火・水(木曜4時から次の週)
+  });
+});

@@ -9,8 +9,14 @@ export const dayIndex = (ms: number) => Math.floor((ms + SHIFT) / DAY);
 export const dayKey = (d: number) => new Date(d * DAY).toISOString().slice(0, 10);
 export const parseDayKey = (s: string) => Math.floor(Date.parse(`${s}T00:00:00Z`) / DAY);
 export const dayStartMs = (d: number) => d * DAY - SHIFT;
-/** その論理日を含む週の月曜(論理日の通し番号)。1970-01-01は木曜 */
-export const weekStartDay = (d: number) => d - (((d + 3) % 7) + 7) % 7;
+/**
+ * その論理日を含む週の初日(論理日の通し番号)。1970-01-01は木曜。
+ * anchor を渡すと、その日と同じ曜日を週の初日にする(プログラム開始日の曜日)。省略時は月曜。
+ */
+export const weekStartDay = (d: number, anchor?: number) => {
+  const a = anchor ?? d - (((d + 3) % 7) + 7) % 7;
+  return d - (((d - a) % 7) + 7) % 7;
+};
 
 /** 2026-11-10T21:30:00+09:00 形式 */
 export const toJstIso = (ms: number) =>

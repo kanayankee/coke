@@ -32,7 +32,7 @@ Next.js(App Router) + Googleスプレッドシート(DB) + Vercel。企画書の
 ## デプロイ(Vercel)
 
 プロジェクトを取り込み、`GOOGLE_SERVICE_ACCOUNT_JSON` と `SPREADSHEET_ID` を環境変数に設定する(**`LOGS_SHEET`/`WEEKS_SHEET` は設定しない**＝本番の `logs`/`weeks` に書く)。
-`vercel.json` の Cron が毎週日曜19:00 UTC(＝月曜朝4時JST)に前週を判定して `weeks` に書き込む。Cronが動かなくても、画面を開いたときに未判定の週は自動で判定される。
+`vercel.json` の Cron が毎週水曜19:00 UTC(＝木曜朝4時JST。`program_start` の曜日を変えたら、ここの曜日も合わせる。画面を開けば未判定の週は自動で判定されるので、動かなくても支障はない)に前週を判定して `weeks` に書き込む。Cronが動かなくても、画面を開いたときに未判定の週は自動で判定される。
 
 ## パスワードの変え方
 
@@ -41,13 +41,13 @@ Next.js(App Router) + Googleスプレッドシート(DB) + Vercel。企画書の
 
 ## シートの設定
 
-- `settings`: `program_start`(計測週の開始日・月曜), `final_goal_per_week`(最終目標。初期値3は仮), `step_down`(クリアごとに下げる本数), `sugar_g_per_100ml`(糖分。初期値11.3は仮。ラベルで確認), `graduate_weeks`(最終目標を何週続けたら卒業か。初期値4)
+- `settings`: `program_start`(計測週の開始日。**週の区切りは、この日と同じ曜日の朝4時になる**。月曜にすれば月曜始まり), `final_goal_per_week`(最終目標。初期値3は仮), `step_down`(クリアごとに下げる本数), `sugar_g_per_100ml`(糖分。初期値11.3は仮。ラベルで確認), `graduate_weeks`(最終目標を何週続けたら卒業か。初期値4)
 - `sizes`: ボタンの追加・変更。`price_yen` は0のままだと金額表示は隠れる
 - `weeks`: 上限は手で書き換えてよい(その週の上限として優先される)。実績とクリア可否は自動で入る
 
 ## 仕様メモ
 
-- 1日・1週は日本時間の朝4時区切り(週は月曜)。計算は `lib/time.ts`。Vercel(UTC)でも同じ結果になる
+- 1日・1週は日本時間の朝4時区切り(週は `program_start` と同じ曜日始まり。月曜開始なら月曜始まり)。計算は `lib/time.ts`。Vercel(UTC)でも同じ結果になる
 - ステージ進行は `lib/status.ts`。記録と設定から毎回計算するので、記録を直せば結果も追従する
 - 最初の上限 = 計測週の本数 − `step_down`(ただし最終目標を下回らない)。未達成の週は同じ上限で再挑戦
 - 取り消しは記録後10分以内。行は消さず `deleted` を `TRUE` にする

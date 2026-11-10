@@ -7,12 +7,13 @@ const STREAK_MILESTONES = [3, 7, 14, 30, 60, 100];
 /** 開始週からの全週の上限・実績・クリア可否を、記録と設定から決定的に計算する */
 export function computeWeeks(logs: Log[], s: Settings, rows: WeekRow[], nowMs: number): WeekResult[] {
   const startDay = parseDayKey(s.programStart);
-  const curWeek = weekStartDay(dayIndex(nowMs));
+  const wk = (d: number) => weekStartDay(d, startDay);
+  const curWeek = wk(dayIndex(nowMs));
   const override = new Map(rows.filter((r) => r.limit != null).map((r) => [r.weekStart, r.limit as number]));
   const counts = new Map<number, number>();
   for (const l of logs) {
     if (l.deleted || l.type !== "drink") continue;
-    const w = weekStartDay(dayIndex(l.at));
+    const w = wk(dayIndex(l.at));
     counts.set(w, (counts.get(w) ?? 0) + 1);
   }
   const out: WeekResult[] = [];
@@ -66,12 +67,13 @@ export function buildStatus(logs: Log[], sizes: SizeDef[], s: Settings, rows: We
   const live = logs.filter((l) => !l.deleted);
   const drinks = live.filter((l) => l.type === "drink");
   const today = dayIndex(nowMs);
-  const curWeek = weekStartDay(today);
   const startDay = parseDayKey(s.programStart);
+  const wk = (d: number) => weekStartDay(d, startDay);
+  const curWeek = wk(today);
   const weeks = computeWeeks(logs, s, rows, nowMs);
   const cur = weeks.find((w) => w.weekStart === dayKey(curWeek));
 
-  const weekDrinks = drinks.filter((l) => weekStartDay(dayIndex(l.at)) === curWeek);
+  const weekDrinks = drinks.filter((l) => wk(dayIndex(l.at)) === curWeek);
   const count = weekDrinks.length;
   const daysLeft = curWeek + 7 - today;
   const limit = cur?.limit ?? null;
@@ -129,7 +131,7 @@ export function buildStatus(logs: Log[], sizes: SizeDef[], s: Settings, rows: We
     remaining,
     daysLeft,
     allowanceToday,
-    skipsThisWeek: live.filter((l) => l.type === "skip" && weekStartDay(dayIndex(l.at)) === curWeek).length,
+    skipsThisWeek: live.filter((l) => l.type === "skip" && wk(dayIndex(l.at)) === curWeek).length,
     zeroStreak,
     lastDrink: last ? { atMs: last.at, label: fmtJst(last.at), size: last.size, volumeMl: last.volumeMl } : null,
     undo,
