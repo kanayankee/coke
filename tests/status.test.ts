@@ -86,3 +86,18 @@ describe("木曜開始のプログラム", () => {
     expect(st.daysLeft).toBe(2); // 火・水(木曜4時から次の週)
   });
 });
+
+describe("日別ビュー", () => {
+  const logs = [drink("2026-11-10T12:00:00+09:00"), drink("2026-11-10T23:00:00+09:00"), drink("2026-11-11T02:00:00+09:00")];
+  const st = buildStatus(logs, [], { ...S, programStart: "2026-11-09" }, [], t("2026-11-11T12:00:00+09:00"));
+  it("週の日別は月曜始まりで7日分、深夜2時は前日に入る", () => {
+    expect(st.weekDays.map((d) => d.label)).toEqual(["月", "火", "水", "木", "金", "土", "日"]);
+    expect(st.weekDays[1]).toMatchObject({ date: "2026-11-10", drinks: 3 }); // 11/11 2時も11/10扱い
+    expect(st.weekDays[2]).toMatchObject({ isToday: true, drinks: 0 });
+    expect(st.weekDays[6].isFuture).toBe(true);
+  });
+  it("記録リストは新しい順で、mlを含まない", () => {
+    expect(st.entries.map((e) => e.time)).toEqual(["2:00", "23:00", "12:00"]);
+    expect(JSON.stringify(st.entries)).not.toContain("ml");
+  });
+});

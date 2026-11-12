@@ -1,7 +1,8 @@
-import { DAY, dayIndex, dayKey, dayStartMs, fmtJst, parseDayKey, weekStartDay } from "./time";
+import { DAY, dayIndex, dayKey, dayStartMs, fmtJst, jstParts, parseDayKey, weekStartDay } from "./time";
 import type { Log, PublicStatus, Settings, SizeDef, WeekResult, WeekRow } from "./types";
 
 export const UNDO_WINDOW_MS = 10 * 60_000;
+const DOW = ["月", "火", "水", "木", "金", "土", "日"];
 const STREAK_MILESTONES = [3, 7, 14, 30, 60, 100];
 
 /** 開始週からの全週の上限・実績・クリア可否を、記録と設定から決定的に計算する */
@@ -101,6 +102,35 @@ export function buildStatus(logs: Log[], sizes: SizeDef[], s: Settings, rows: We
     return { date: dayKey(d), count: perDay.get(d) ?? 0 };
   });
 
+  // 直近14日の記録(新しい順)。容量はmlでなく本分で見せる
+  const entries = live
+    .filter((l) => dayIndex(l.at) >= today - 13)
+    .sort((a, b) => b.at - a.at)
+    .map((l) => {
+      const p = jstParts(l.at);
+      return {
+        atMs: l.at,
+        day: dayKey(dayIndex(l.at)),
+        time: `${p.hour}:${String(p.minute).padStart(2, "0")}`,
+        type: l.type,
+        size: l.type === "skip" ? "我慢した" : l.size === "custom" ? `自由入力（${(l.volumeMl / 500).toFixed(1)}本分）` : l.size,
+      };
+    });
+
+  const skipsPerDay = new Map<number, number>();
+  for (const l of live) if (l.type === "skip") skipsPerDay.set(dayIndex(l.at), (skipsPerDay.get(dayIndex(l.at)) ?? 0) + 1);
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const d = curWeek + i;
+    return {
+      date: dayKey(d),
+      label: DOW[(((d + 3) % 7) + 7) % 7],
+      drinks: perDay.get(d) ?? 0,
+      skips: skipsPerDay.get(d) ?? 0,
+      isToday: d === today,
+      isFuture: d > today,
+    };
+  });
+
   const price = new Map(sizes.map((z) => [z.label, z.priceYen]));
   const monthKey = dayKey(today).slice(0, 7);
   const monthDrinks = drinks.filter((l) => dayKey(dayIndex(l.at)).startsWith(monthKey));
@@ -136,6 +166,8 @@ export function buildStatus(logs: Log[], sizes: SizeDef[], s: Settings, rows: We
     lastDrink: last ? { atMs: last.at, label: fmtJst(last.at), size: last.size, volumeMl: last.volumeMl } : null,
     undo,
     daily,
+    entries,
+    weekDays,
     history: weeks.filter((w) => w.completed).reverse(),
     totals: {
       weekMl,

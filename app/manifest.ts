@@ -1,8 +1,8 @@
 import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "コーラログ",
-    short_name: "コーラログ",
+    name: "COKELOG",
+    short_name: "COKELOG",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",

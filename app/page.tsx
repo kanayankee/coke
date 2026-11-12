@@ -30,6 +30,7 @@ export default function Home() {
   const [mode, setMode] = useState<Mode>(null);
   const [pw, setPw] = useState<string | null>(null); // ログイン済みならパスワード(メモリ上)
   const [login, setLogin] = useState(false);
+  const [selDay, setSelDay] = useState<string | null>(null);
 
   useEffect(() => { try { const v = localStorage.getItem(PW_KEY); if (v) setPw(v); } catch {} }, []);
   const lock = useCallback(() => { try { localStorage.removeItem(PW_KEY); } catch {} setPw(null); }, []);
@@ -54,6 +55,11 @@ export default function Home() {
 
   if (!st) return <div className="wrap"><h1><img src="/logo.png" alt="COKELOG" className="logo" /></h1><p>{err || "読み込み中…"}</p></div>;
 
+  const today = st.daily[13];
+  const yest = st.daily[12];
+  const d = today.count - yest.count;
+  const diffText = d < 0 ? `昨日より${-d}本少ない` : d === 0 ? "昨日と同じペース" : `昨日より${d}本多め（今日はまだ途中）`;
+  const dayLabel = (day: string) => (day === today.date ? "今日" : day === yest.date ? "昨日" : day.slice(5).replace("-", "/"));
   const max = Math.max(3, ...st.daily.map((d) => d.count));
   const pct = st.limit == null ? 0 : st.limit === 0 ? (st.count > 0 ? 100 : 0) : Math.min(100, (st.count / st.limit) * 100);
   const undoable = st.undo && st.undo.until > now;
@@ -80,6 +86,15 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="card">
+        <h2>今日と昨日</h2>
+        <div className="tyrow">
+          <div><span className="lbl">今日</span><span className="stat">{today.count}<small>本</small></span></div>
+          <div><span className="lbl">昨日</span><span className="stat">{yest.count}<small>本</small></span></div>
+        </div>
+        <p className="diff">{diffText}</p>
+      </section>
+
       <section className="card last">
         <h2>最後に飲んだ日時</h2>
         {st.lastDrink ? (
@@ -97,13 +112,39 @@ export default function Home() {
       </div>
 
       <section className="card">
+        <h2>今週の日別</h2>
+        <div className="week">
+          {st.weekDays.map((d) => (
+            <div key={d.date} className={`day ${d.isToday ? "today" : ""} ${d.isFuture ? "future" : d.drinks === 0 ? "zero" : "some"}`}>
+              <span className="dow">{d.label}</span>
+              <b>{d.isFuture ? "–" : d.drinks}</b>
+              <i>{!d.isFuture && d.skips > 0 ? `我慢${d.skips}` : "\u00a0"}</i>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="card">
         <h2>直近14日の本数</h2>
         <div className="graph">
           {st.daily.map((d) => (
-            <div key={d.date}>{d.count > 0 && d.count}<i className={d.count === 0 ? "zero" : ""} style={{ height: `${(d.count / max) * 70}%` }} /></div>
+            <div key={d.date} role="button" className={selDay === d.date ? "sel" : ""} onClick={() => setSelDay(selDay === d.date ? null : d.date)}>{d.count > 0 && d.count}<i className={d.count === 0 ? "zero" : ""} style={{ height: `${(d.count / max) * 70}%` }} /></div>
           ))}
         </div>
         <div className="axis"><span>{st.daily[0].date.slice(5).replace("-", "/")}</span><span>{st.daily[13].date.slice(5).replace("-", "/")}</span></div>
+        {selDay ? (
+          <div className="detail">
+            <b>{dayLabel(selDay)}</b>
+            {st.entries.filter((e) => e.day === selDay).length === 0 ? <p>記録なし</p> : st.entries.filter((e) => e.day === selDay).map((e) => <EntryRow key={e.atMs} e={e} />)}
+          </div>
+        ) : <p className="note">棒をタップすると、その日の中身が見られます</p>}
+      </section>
+
+      <section className="card">
+        <h2>最近の記録</h2>
+        {st.entries.length === 0 ? <p className="note">まだ記録がありません</p> : st.entries.slice(0, 10).map((e) => (
+          <div key={e.atMs} className="rec"><span className="rd">{dayLabel(e.day)}</span><EntryRow e={e} /></div>
+        ))}
       </section>
 
       <section className="card">
@@ -154,6 +195,10 @@ export default function Home() {
       {mode && pw && <RecordDialog mode={mode} st={st} pw={pw} onUnauthorized={lock} onClose={() => setMode(null)} onDone={(s) => { setSt(s); setMode(null); }} />}
     </div>
   );
+}
+
+function EntryRow({ e }: { e: PublicStatus["entries"][number] }) {
+  return <span className={`entry ${e.type}`}><time>{e.time}</time> {e.size}</span>;
 }
 
 function StoryButton() {

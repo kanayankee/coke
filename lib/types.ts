@@ -45,6 +45,8 @@ export type PublicStatus = {
   lastDrink: { atMs: number; label: string; size: string; volumeMl: number } | null;
   undo: { until: number; label: string } | null;
   daily: { date: string; count: number }[];
+  entries: { atMs: number; day: string; time: string; type: "drink" | "skip"; size: string }[];
+  weekDays: { date: string; label: string; drinks: number; skips: number; isToday: boolean; isFuture: boolean }[];
   history: WeekResult[];
   totals: { weekMl: number; monthMl: number; weekYen: number; monthYen: number; weekSugarG: number; monthSugarG: number; hasPrices: boolean };
   sizes: SizeDef[];

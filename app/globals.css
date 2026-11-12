@@ -53,3 +53,22 @@ label.chk { display:flex; align-items:center; gap:8px; font-size:14px; margin:10
 .note { color:var(--sub); font-size:12px; margin-top:8px; }
 .fab { position:fixed; right:16px; bottom:calc(16px + env(safe-area-inset-bottom)); width:52px; height:52px; border-radius:50%; background:#fff; border:1px solid var(--line); box-shadow:0 2px 10px rgba(0,0,0,.12); font-size:22px; opacity:.85; }
 .logo { height:30px; width:auto; display:block; }
+.tyrow { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.tyrow .lbl { display:block; font-size:12px; color:var(--sub); margin-bottom:2px; }
+.diff { margin:10px 0 0; font-size:14px; font-weight:600; }
+.week { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+.day { background:#fff; border-radius:12px; padding:8px 0 6px; text-align:center; border:2px solid transparent; display:flex; flex-direction:column; gap:2px; }
+.day .dow { font-size:12px; color:var(--sub); }
+.day b { font-size:20px; }
+.day i { font-style:normal; font-size:10px; color:var(--green); min-height:12px; }
+.day.zero { background:#e8f6ee; } .day.some { background:#fdeaea; } .day.future { opacity:.5; }
+.day.today { border-color:var(--ink); }
+.graph div[role=button] { cursor:pointer; border-radius:6px; }
+.graph div.sel { background:#fff; outline:2px solid var(--ink); }
+.detail { margin-top:10px; font-size:14px; display:flex; flex-direction:column; gap:4px; }
+.detail p { margin:0; color:var(--sub); }
+.rec { display:flex; gap:12px; padding:8px 0; border-top:1px solid var(--line); font-size:14px; }
+.rec:first-of-type { border-top:0; }
+.rec .rd { width:44px; color:var(--sub); flex-shrink:0; }
+.entry time { font-weight:700; margin-right:4px; }
+.entry.skip { color:var(--green); font-weight:600; }
