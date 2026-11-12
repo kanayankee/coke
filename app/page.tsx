@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import type { PublicStatus } from "@/lib/types";
+import { fmtDay } from "@/lib/time";
 
 const PW_KEY = "cola-log-pw";
 type Mode = null | "drink" | "skip" | "late" | "undo";
@@ -59,7 +60,7 @@ export default function Home() {
   const yest = st.daily[12];
   const d = today.count - yest.count;
   const diffText = d < 0 ? `昨日より${-d}本少ない` : d === 0 ? "昨日と同じペース" : `昨日より${d}本多め（今日はまだ途中）`;
-  const dayLabel = (day: string) => (day === today.date ? "今日" : day === yest.date ? "昨日" : day.slice(5).replace("-", "/"));
+  const dayLabel = (day: string) => (day === today.date ? "今日" : day === yest.date ? "昨日" : fmtDay(day));
   const max = Math.max(3, ...st.daily.map((d) => d.count));
   const pct = st.limit == null ? 0 : st.limit === 0 ? (st.count > 0 ? 100 : 0) : Math.min(100, (st.count / st.limit) * 100);
   const undoable = st.undo && st.undo.until > now;
@@ -131,10 +132,10 @@ export default function Home() {
             <div key={d.date} role="button" className={selDay === d.date ? "sel" : ""} onClick={() => setSelDay(selDay === d.date ? null : d.date)}>{d.count > 0 && d.count}<i className={d.count === 0 ? "zero" : ""} style={{ height: `${(d.count / max) * 70}%` }} /></div>
           ))}
         </div>
-        <div className="axis"><span>{st.daily[0].date.slice(5).replace("-", "/")}</span><span>{st.daily[13].date.slice(5).replace("-", "/")}</span></div>
+        <div className="axis"><span>{fmtDay(st.daily[0].date)}</span><span>{fmtDay(st.daily[13].date)}</span></div>
         {selDay ? (
           <div className="detail">
-            <b>{dayLabel(selDay)}</b>
+            <b>{fmtDay(selDay)}</b>
             {st.entries.filter((e) => e.day === selDay).length === 0 ? <p>記録なし</p> : st.entries.filter((e) => e.day === selDay).map((e) => <EntryRow key={e.atMs} e={e} />)}
           </div>
         ) : <p className="note">棒をタップすると、その日の中身が見られます</p>}
@@ -164,7 +165,7 @@ export default function Home() {
             <tbody>
               {st.history.map((w) => (
                 <tr key={w.weekStart}>
-                  <td>{w.weekStart.slice(5).replace("-", "/")}〜</td>
+                  <td>{fmtDay(w.weekStart)}〜</td>
                   <td>{w.limit ?? "計測"}</td>
                   <td>{w.actual}本</td>
                   <td>{w.cleared == null ? "—" : w.cleared ? <span className="ok">クリア</span> : <span className="ng">再挑戦</span>}</td>

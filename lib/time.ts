@@ -27,9 +27,19 @@ export function jstParts(ms: number) {
   return { month: d.getUTCMonth() + 1, day: d.getUTCDate(), hour: d.getUTCHours(), minute: d.getUTCMinutes() };
 }
 
+const DOW_JA = ["日", "月", "火", "水", "木", "金", "土"];
+
+/** 日付の表記はすべて「M月D日(曜)」にそろえる */
+export function fmtDay(key: string) {
+  const d = new Date(`${key}T00:00:00Z`);
+  return `${d.getUTCMonth() + 1}月${d.getUTCDate()}日(${DOW_JA[d.getUTCDay()]})`;
+}
+
+/** 日本時間の暦日で「M月D日(曜) H時MM分」 */
 export function fmtJst(ms: number) {
   const p = jstParts(ms);
-  return `${p.month}月${p.day}日 ${p.hour}時${String(p.minute).padStart(2, "0")}分`;
+  const dow = DOW_JA[new Date(ms + 9 * H).getUTCDay()];
+  return `${p.month}月${p.day}日(${dow}) ${p.hour}時${String(p.minute).padStart(2, "0")}分`;
 }
 
 export function fmtAgo(fromMs: number, nowMs: number) {

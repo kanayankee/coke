@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dayIndex, dayKey, weekStartDay, toJstIso, fmtJst } from "@/lib/time";
+import { dayIndex, dayKey, weekStartDay, toJstIso, fmtJst, fmtDay } from "@/lib/time";
 
 const t = (s: string) => Date.parse(s);
 const logical = (s: string) => dayKey(dayIndex(t(s)));
@@ -22,5 +22,6 @@ describe("週は月曜朝4時区切り", () => {
 
 describe("整形", () => {
   it("toJstIso", () => expect(toJstIso(t("2026-11-10T12:30:00Z"))).toBe("2026-11-10T21:30:00+09:00"));
-  it("fmtJst", () => expect(fmtJst(t("2026-11-10T21:05:00+09:00"))).toBe("11月10日 21時05分"));
+  it("fmtDay", () => expect(fmtDay("2026-11-09")).toBe("11月9日(月)"));
+  it("fmtJst", () => expect(fmtJst(t("2026-11-10T21:05:00+09:00"))).toBe("11月10日(火) 21時05分"));
 });

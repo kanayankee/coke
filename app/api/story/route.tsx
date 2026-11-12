@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import { getStatus } from "@/lib/service";
-import { fmtAgo } from "@/lib/time";
+import { fmtAgo, fmtDay } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +24,7 @@ export async function GET(req: Request) {
   const headline = t === "mid" ? (st.remaining != null ? `今週あと${st.remaining}本` : `今週は${st.count}本`) : st.story.headline;
   const color = st.story.template === "mid" ? "#d62828" : "#2e9e5b";
   const d = new Date(st.nowMs + 9 * 3600_000);
-  const dateText = `${d.getUTCFullYear()}.${d.getUTCMonth() + 1}.${d.getUTCDate()}`;
+  const dateText = fmtDay(d.toISOString().slice(0, 10));
   const count = `${st.count}`;
   const limit = st.limit != null ? `${st.limit}` : "";
   const pct = st.limit == null ? 0 : st.limit === 0 ? (st.count > 0 ? 100 : 0) : Math.min(100, (st.count / st.limit) * 100);
@@ -34,7 +34,7 @@ export async function GET(req: Request) {
   const lastText = st.lastDrink ? `${st.lastDrink.label}（${fmtAgo(st.lastDrink.atMs, st.nowMs)}）` : "記録なし";
   const max = Math.max(3, ...st.daily.map((x) => x.count));
 
-  const fontText = "コーラログ今週あと本は上限ステージ計測週準備中連続ゼロ日最後に飲んだ記録なしクリア直近の推移分前時間たった今月年0123456789.:/（）／ " + headline + lastText + stageText;
+  const fontText = "コーラログ今週あと本は上限ステージ計測週準備中連続ゼロ日最後に飲んだ記録なしクリア直近の推移分前時間たった今月年0123456789.:/（）／()月火水木金土日 " + headline + lastText + stageText;
   const font = await loadFont(fontText);
   let logo: string | null = null;
   try {

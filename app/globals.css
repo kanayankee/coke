@@ -69,6 +69,6 @@ label.chk { display:flex; align-items:center; gap:8px; font-size:14px; margin:10
 .detail p { margin:0; color:var(--sub); }
 .rec { display:flex; gap:12px; padding:8px 0; border-top:1px solid var(--line); font-size:14px; }
 .rec:first-of-type { border-top:0; }
-.rec .rd { width:44px; color:var(--sub); flex-shrink:0; }
+.rec .rd { width:96px; color:var(--sub); flex-shrink:0; }
 .entry time { font-weight:700; margin-right:4px; }
 .entry.skip { color:var(--green); font-weight:600; }
