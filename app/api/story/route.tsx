@@ -36,13 +36,18 @@ export async function GET(req: Request) {
 
   const fontText = "コーラログ今週あと本は上限ステージ計測週準備中連続ゼロ日最後に飲んだ記録なしクリア直近の推移分前時間たった今月年0123456789.:/（）／ " + headline + lastText + stageText;
   const font = await loadFont(fontText);
+  let logo: string | null = null;
+  try {
+    const buf = await (await fetch(new URL("/logo.png", req.url))).arrayBuffer();
+    logo = `data:image/png;base64,${Buffer.from(buf).toString("base64")}`;
+  } catch {}
 
   const row = { display: "flex" } as const;
   return new ImageResponse(
     (
       <div style={{ width: 1080, height: 1920, display: "flex", flexDirection: "column", background: "#ffffff", padding: "150px 80px 0", fontFamily: "NotoSansJP, sans-serif", color: "#1c1c1e" }}>
         <div style={{ ...row, justifyContent: "space-between", fontSize: 36, color: "#6b6b70" }}>
-          <div style={row}>コーラログ</div>
+          <div style={row}>{logo ? <img src={logo} width={300} height={80} alt="" /> : "COKELOG"}</div>
           <div style={row}>{dateText}</div>
         </div>
         <div style={{ ...row, fontSize: 124, marginTop: 70, color }}>{headline}</div>

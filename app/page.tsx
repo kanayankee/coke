@@ -52,7 +52,7 @@ export default function Home() {
     return () => { clearInterval(a); clearInterval(b); };
   }, [load]);
 
-  if (!st) return <div className="wrap"><h1>コーラログ</h1><p>{err || "読み込み中…"}</p></div>;
+  if (!st) return <div className="wrap"><h1><img src="/logo.png" alt="COKELOG" className="logo" /></h1><p>{err || "読み込み中…"}</p></div>;
 
   const max = Math.max(3, ...st.daily.map((d) => d.count));
   const pct = st.limit == null ? 0 : st.limit === 0 ? (st.count > 0 ? 100 : 0) : Math.min(100, (st.count / st.limit) * 100);
@@ -67,7 +67,7 @@ export default function Home() {
 
   return (
     <div className="wrap">
-      <h1>コーラログ <small>{st.state === "active" || st.state === "graduated" ? `ステージ ${st.stage}` : st.state === "measuring" ? "計測週" : ""}</small></h1>
+      <h1><img src="/logo.png" alt="COKELOG" className="logo" /> <small>{st.state === "active" || st.state === "graduated" ? `ステージ ${st.stage}` : st.state === "measuring" ? "計測週" : ""}</small></h1>
       {err && <p className="err">{err}</p>}
 
       <section className="card hero">
