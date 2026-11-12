@@ -31,7 +31,7 @@ Next.js(App Router) + Googleスプレッドシート(DB) + Vercel。企画書の
 
 ## デプロイ(Vercel)
 
-プロジェクトを取り込み、`GOOGLE_SERVICE_ACCOUNT_JSON` と `SPREADSHEET_ID` を環境変数に設定する(**`LOGS_SHEET`/`WEEKS_SHEET` は設定しない**＝本番の `logs`/`weeks` に書く)。
+プロジェクトを取り込み、`GOOGLE_SERVICE_ACCOUNT_JSON` と `SPREADSHEET_ID` を環境変数に設定する(**`LOGS_SHEET`/`WEEKS_SHEET` は設定しない**＝本番の `logs`/`weeks` に書く。Vercelの Production では、これらが設定されていても無視して必ず `logs`/`weeks` を使う)。
 `vercel.json` の Cron が毎週日曜19:00 UTC(＝月曜朝4時JST。`program_start` の曜日を変えたら、ここの曜日も合わせる。画面を開けば未判定の週は自動で判定されるので、動かなくても支障はない)に前週を判定して `weeks` に書き込む。Cronが動かなくても、画面を開いたときに未判定の週は自動で判定される。
 
 ## パスワードの変え方

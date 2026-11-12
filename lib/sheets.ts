@@ -3,8 +3,10 @@ import { randomUUID } from "node:crypto";
 import { toJstIso } from "./time";
 import type { Log, Settings, SizeDef, WeekRow } from "./types";
 
-const LOGS = () => process.env.LOGS_SHEET || "logs";
-const WEEKS = () => process.env.WEEKS_SHEET || "weeks";
+// Vercelの本番環境では、環境変数が紛れ込んでいても必ず本番シートを使う(開発用シートへの誤書き込み防止)
+const isProd = () => process.env.VERCEL_ENV === "production";
+const LOGS = () => (isProd() ? "logs" : process.env.LOGS_SHEET || "logs");
+const WEEKS = () => (isProd() ? "weeks" : process.env.WEEKS_SHEET || "weeks");
 const ID = () => {
   const v = process.env.SPREADSHEET_ID;
   if (!v) throw new Error("SPREADSHEET_ID が未設定です");
